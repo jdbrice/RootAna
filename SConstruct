@@ -40,6 +40,8 @@ common_env[ "_LIBFLAGS" ] = common_env[ "_LIBFLAGS" ] + " " + ROOTLIBS + " "
 
 
 jdb_log_level = ARGUMENTS.get( "ll", 0 )
+common_env.Append(CXXFLAGS 		= "-DJDB_LOG_LEVEL=" + str(jdb_log_level) )
+
 target = common_env.StaticLibrary( target='RootAna', source=[ Glob( "*.cpp" ) ] )
 
 # set as the default target
