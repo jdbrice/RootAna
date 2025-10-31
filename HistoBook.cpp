@@ -407,7 +407,11 @@ namespace jdb{
 
 			string baseHName = hName;
 			vector<string> prefixes = config.getStringVector( nodeName +":prefixes" );
+            if ( config.exists( nodeName +":pre" )  )
+                prefixes = config.getStringVector( nodeName +":pre" );
 			vector<string> suffixes = config.getStringVector( nodeName + ":suffixes" );
+            if ( config.exists( nodeName +":post" )  )
+                suffixes = config.getStringVector( nodeName +":post" );
 			vector<string> variants = config.getStringVector( nodeName + ":variants" );
 
 
@@ -455,7 +459,15 @@ namespace jdb{
 
 						// apply styling if given
 						RooPlotLib rpl;
+                        // apply style at style="path" if given
+                        if ( config.exists( nodeName + ":style" ) ){
+                            string spath = config.get<string>( nodeName + ":style" );
+                            if ( config.exists( spath ) )
+                                rpl.style( tmp ).set( config, spath );
+                        }
+                        // apply inline style if given
 						rpl.style( tmp ).set( config, nodeName );
+
 
 					} else if ( config.exists( nodeName + ":bins_x" ) || config.exists( nodeName + ":bins_y" ) || config.exists( nodeName + ":bins_z" ) ) {
 						ERROR( classname(), "could not make histogram : " << vhName );

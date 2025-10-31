@@ -47,7 +47,7 @@ namespace jdb{
 	void HistoAnalyzer::initReporter( string _jobPostfix ){
 
 		INFO( classname(), "Creating Reporter" );
-		string pRepOut = config.join( nodePath, "Reporter", "output:url" );
+		string pRepOut = config.join( nodePath, "Reporter" );
 		string outputURL = config[ pRepOut ];
 
 	   	// Default reporter
@@ -98,11 +98,12 @@ namespace jdb{
 		if ( "" != inf ){
 			DEBUG( classname(), " Loading data from " << inf )
 			inFile = new TFile( inf.c_str(), "READ" );
+            if ( !inFile->IsOpen() ){
+                ERROR( classname(), "Data File Could not be opened from : " + inf );
+            }
 		}
 
-		if ( !inFile->IsOpen() ){
-			ERROR( classname(), "Data File Could not be opened from : " + inf );
-		}
+		
 	}
 
 	HistoAnalyzer::~HistoAnalyzer(){

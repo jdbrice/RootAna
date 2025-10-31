@@ -36,11 +36,14 @@ namespace jdb {
 		Reporter( string filename, TCanvas * _canvas );
 		~Reporter();
 
+
+        void setup();
+
 		virtual const char * classname() const { return "Reporter"; }
 
 
 		void margins(){
-			cout << "MARGINS( " << mt << ", " << mr << ", " << mb << ", " << ml << ")" << endl;
+			// cout << "MARGINS( " << mt << ", " << mr << ", " << mb << ", " << ml << ")" << endl;
 			canvas->cd(0);
 			canvas->SetLeftMargin( this->ml );
 			canvas->SetTopMargin( this->mt );
@@ -118,12 +121,15 @@ namespace jdb {
 		int currentPad;
 		// The number of horizontal and vertical divisions on the page
 		int dx, dy;
+        // the width and height of the canvas in pixels
+        int w, h;
 		// Filename of the report
 		string filename;
 		// Number of instances of the Reporter running
 		static int instances;
 		bool isOpen;
 
+        // The margins of the canvase
 		float mt, mr, mb, ml;
 
 	};

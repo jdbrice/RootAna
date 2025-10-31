@@ -12,7 +12,7 @@
 #include "XmlRange.h"
 #include "XmlPoint.h"
 #include "Reporter.h"
-#include "TaskRunner.h"
+#include "TaskEngine/TaskRunner.h"
 
 using namespace jdb;
 

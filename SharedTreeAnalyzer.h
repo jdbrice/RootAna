@@ -13,7 +13,7 @@
 #include "HistoBook.h"
 #include "Reporter.h"
 #include "DataSource.h"
-#include "TaskRunner.h"
+#include "TaskEngine/TaskRunner.h"
 #include "ChainLoader.h"
 #include "Utils.h"
 #include "TreeAnalyzer.h"

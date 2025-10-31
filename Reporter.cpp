@@ -2,68 +2,91 @@
 #include "Reporter.h"
 #include "Utils.h"
 #include "LoggerConfig.h"
+#include "TStyle.h"
 
 namespace jdb{
 
 	int Reporter::instances = 0;
 
-	Reporter::Reporter( string filename, int w, int h ){
+    
+
+	Reporter::Reporter( string filename, int w, int h ) : mt(0.1f), mr(0.1f), mb(0.13f), ml(0.13f) {
 		DEBUG( classname(), "(" <<  filename <<  ", width=" <<  w <<  ", height=" <<  h << ")" )
 	
+        this->canvas = nullptr;
 		this->filename = filename;
+        this->w = w;
+        this->h = h;
 
-		canvas = new TCanvas( ("Reporter"+ts(instances)).c_str() , "canvas", w, h);
-		canvas->Print( ( filename + "[" ).c_str() );
-		INFO( classname(), " Opening report " << filename );
-		instances++;
-
-		isOpen = true;
+		setup();
 
 		DEBUG( classname(), " Instance #" << instances );
 	}
 
-	Reporter::Reporter( string filename, TCanvas * _canvas ){
+	Reporter::Reporter( string filename, TCanvas * _canvas ) : mt(0.1f), mr(0.1f), mb(0.13f), ml(0.13f) {
 		DEBUG( classname(), "(" <<  filename <<  ", canvas=" << _canvas << ")" )
 	
+        this->canvas = nullptr;
 		this->filename = filename;
-
-		canvas = _canvas;
-		if ( nullptr == canvas ){
-			ERRORC( "Canvas was NULL, fallback to new canvas" );
-			canvas = new TCanvas( ("Reporter"+ts(instances)).c_str() , "canvas", 800, 800);
-			instances++;
-		}
-
-		canvas->Print( ( filename + "[" ).c_str() );
-		INFO( classname(), " Opening report " << filename );
-	
-		isOpen = true;
+        this->w = -1;
+        this->h = -1;
+		this->canvas = _canvas;
+		
+        setup();
 
 		DEBUG( classname(), " Instance #" << instances );
 	}
 
-	Reporter::Reporter( XmlConfig &config, string np, string prefix ){
+	Reporter::Reporter( XmlConfig &config, string np, string prefix ) : mt(0.1f), mr(0.1f), mb(0.13f), ml(0.13f) {
 		DEBUG( classname(), "( config, np=" << np << ", prefix=" << prefix << ")" )
 
+        this->canvas = nullptr;
 		this->config = config;
 		this->nodePath = config.basePath( np );
 
-		this->filename = prefix + config.getXString( nodePath + ".output:url" );
+		this->filename = prefix + config.get<string>( nodePath + ".output:url",
+            prefix + config.get<string>( nodePath + ":url", "rp.pdf" )
+         );
+        INFOC( "filename : " << this->filename << endl );
 
-		int w = config.getInt( nodePath + ".output:width", 400 );
-		int h = config.getInt( nodePath + ".output:height", 400 );
+		this->w = config.getInt( nodePath + ".output:width", config.get<int>( nodePath + ":w", 400 ) );
+		this->h = config.getInt( nodePath + ".output:height", config.get<int>( nodePath + ":h", 400 ) );
 
-		canvas = new TCanvas( ("Reporter" + ts( instances ) ).c_str() , "canvas", w, h);
-		canvas->Print( ( filename + "[" ).c_str() );
-		
-		DEBUG( classname(), " Opening " << filename ) 
-		
-		instances++;
+        INFOC( "w=" << w << ", h= " << h);
 
-		isOpen = true;
+        vector<float> margins = config.getVector<float>( nodePath + ".Reporter:margins" );
+        if ( margins.size() >= 4 ){
+            this->mt = margins[0];
+            this->mr = margins[1];
+            this->mb = margins[2];
+            this->ml = margins[3];
+            gStyle->SetStatX( 0.99 );
+            gStyle->SetStatW( this->mr/2.0 );
+            gStyle->SetStatY( 1 - this->mt );
+        }
+
+		setup();
 
 		DEBUG( classname(), " Instance #" << instances )
 	}
+
+    void Reporter::setup(){
+        // unified setup entry point
+
+        if ( nullptr == canvas ){
+            canvas = new TCanvas( ("Reporter"+ts(instances)).c_str() , "canvas", this->w, this->h);
+            instances++;
+        }
+
+        canvas->Print( ( filename + "[" ).c_str() );
+        INFO( classname(), " Opening report " << filename );
+        instances++;
+
+        isOpen = true;
+
+        margins();
+
+    }
 
 	Reporter::~Reporter() {
 		// properly close the report file

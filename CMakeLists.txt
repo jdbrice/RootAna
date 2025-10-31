@@ -1,24 +1,38 @@
-cmake_minimum_required(VERSION 3.10)
-project(RootAna)
+# Sources: list explicitly (recommended) or use a glob if you prefer
+file( GLOB MY_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
+file( GLOB MY_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/*.h" )
 
-file(GLOB SRC_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
-add_library(RootAna SHARED ${SRC_FILES})
 
-# find_library(TaskEngine_Lib
-#     NAMES TaskEngine
-#     HINTS ${CMAKE_SOURCE_DIR}/../TaskEngine/build ${CMAKE_SOURCE_DIR}/TaskEngine/build
-#     NO_DEFAULT_PATH
-# )
-# message(STATUS "Found XmlConfig: ${TaskEngine_Lib}")
-# target_link_libraries(RootAna PRIVATE ${TaskEngine_Lib})
+# OBJECT library (used to compose the combined lib)
+add_library(RootAna_obj OBJECT ${MY_SOURCES} ${MY_HEADERS})
+target_include_directories(RootAna_obj PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ ${CMAKE_SOURCE_DIR}/ )
+target_link_libraries(RootAna_obj PUBLIC XmlConfig RooPlotLib)
 
-target_compile_options(RootAna PRIVATE "-m32")
-target_link_libraries(RootAna PRIVATE "-m32")
+# Actual library for this component
+if(BUILD_SHARED_LIBS)
+  add_library(RootAna SHARED $<TARGET_OBJECTS:RootAna_obj>)
+else()
+  add_library(RootAna STATIC $<TARGET_OBJECTS:RootAna_obj>)
+endif()
+target_include_directories(RootAna PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ ${CMAKE_SOURCE_DIR}/)
+target_link_libraries(RootAna PUBLIC XmlConfig RooPlotLib)
 
-target_include_directories(RootAna PRIVATE
-  ${CMAKE_SOURCE_DIR}/XmlConfig
-  ${CMAKE_SOURCE_DIR}/RooPlotLib
-  ${CMAKE_SOURCE_DIR}/TaskEngine
-  ${CMAKE_SOURCE_DIR}/
+# Run root-config to get flags
+execute_process(
+  COMMAND root-config --cflags
+  OUTPUT_VARIABLE ROOT_CFLAGS
+  OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-set_property(TARGET RootAna PROPERTY CXX_STANDARD 11)
+execute_process(
+  COMMAND root-config --libs
+  OUTPUT_VARIABLE ROOT_LIBS
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+separate_arguments(ROOT_CFLAGS)
+separate_arguments(ROOT_LIBS)
+
+target_compile_options(RootAna PRIVATE ${ROOT_CFLAGS})
+target_link_libraries(RootAna PRIVATE ${ROOT_LIBS})
+
+
